@@ -1,0 +1,14 @@
+RewriteEngine on 
+
+# don’t rewrite files (-s), symbolic links (-l) and directories (-d)
+RewriteCond %{REQUEST_FILENAME} -s [OR]
+RewriteCond %{REQUEST_FILENAME} -l [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+
+# rewrite!
+RewriteRule ^.*$ - [NC,L]
+
+# rewrite the rest to index.php with multiple gets
+RewriteRule ^([^/]+)/?$ index.php?page=$1 [NC,L]
+RewriteRule ^([^/]+)/([^/]+)/?$ index.php?page=$1&url=$2 [NC,L]
+RewriteRule ^([^/]+)/([^/]+)/([^/]+)/?$ index.php?page=$1&url=$2&sort=$3 [NC,L]
