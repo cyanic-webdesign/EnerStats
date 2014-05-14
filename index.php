@@ -2,9 +2,6 @@
 
 session_start();
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 //	include the autoloader
 require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/Cyanic/AutoLoader.php';
 
@@ -77,7 +74,7 @@ if(in_array($currentPage, $websitePages)) {
 		<link rel="apple-touch-icon" sizes="144x144" href="/images/touch-icon-ipad-retina.png" />      
         <!-- title -->
         
-        <?php require($showPage); ?>
+        <?php require('pages/' . $showPage); ?>
 		
 		<script src="js/jquery.stayInWebApp.min.js"></script>
 		<script>

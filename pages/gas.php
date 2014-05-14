@@ -1,10 +1,9 @@
 <?php
 
 //	get the last 24h
-$logs = array_reverse($energyMapper->getGasUsageLogs(24));
+$logs = array_reverse($energyMapper->getGasUsageLogs(48));
 
-$lastLog = $logs[count($logs)-1];
-$secondLastLog = $logs[count($logs)-7];
+$lastLog = $energyMapper->getLogs(7);
 
 //	get the current
 $currentLogs = $energyMapper->getCurrentStats();
@@ -13,7 +12,7 @@ $currentLogs = $currentLogs[0];
 //	get the records
 $recordUsage = $energyMapper->getRecord('gas_usage');
 
-$daily = $energyMapper->getDailyLogs(new DateTime('- 7 days'), new DateTime('today'));
+$daily = $energyMapper->getDailyLogs(new DateTime('- 14 days'), new DateTime('today'));
 $monthly = $energyMapper->getMonthlyLogs(new DateTime('last year'), new DateTime('next month'));
 $yearly = $energyMapper->getYearlyLogs();
 
@@ -54,16 +53,16 @@ $energyUser = $authenticate->getEnergyUser();
                 </header>
                 <hr>           
                 <ul class="list-unstyled clearfix">
-					<li class="col-md-3"><div class="well text-center">Huidig<br><h4><?php echo number_format($lastLog->getGasUsage() - $secondLastLog->getGasUsage(), 4); ?> m&#179;</h4></div></li>
+					<li class="col-md-3"><div class="well text-center">Huidig<br><h4><?php echo number_format($lastLog[0]->getGasUsage() - $lastLog[6]->getGasUsage(), 4); ?> m&#179;</h4></div></li>
 					<li class="col-md-3"><div class="well text-center">Vandaag<br><h4><?php echo number_format($currentLogs->getGasUsage(), 2); ?> m&#179;</h4></div></li>
-					<li class="col-md-3"><div class="well text-center">Dagrecord (<?php echo $recordUsage[0]->getDateCreated()->format('d-m-Y'); ?>)<br><h4><?php echo number_format($recordUsage[0]->getGasUsage(), 2); ?> m&#179;</h4></div></li>					                    					
-                    <li class="col-md-3"><div class="well text-center">Totaal<br><h4><?php echo number_format($lastLog->getGasUsage(), 2); ?> m&#179;</h4></div></li>
+					<li class="col-md-3"><div class="well text-center">Record (<?php echo $recordUsage[0]->getDateCreated()->format('d-m-Y'); ?>)<br><h4><?php echo number_format($recordUsage[0]->getGasUsage(), 2); ?> m&#179;</h4></div></li>					                    					
+                    <li class="col-md-3"><div class="well text-center">Totaal<br><h4><?php echo number_format($lastLog[0]->getGasUsage(), 2); ?> m&#179;</h4></div></li>
                 </ul>
                 <hr>
                 <div class="row clearfix">
                     <article class="container">
                         <header>
-                            <h3>Afgelopen 24 uur</h3>
+                            <h3>Afgelopen 48 uur</h3>
                         </header>
                     </article>
                     <div class="col-md-12">
@@ -74,7 +73,7 @@ $energyUser = $authenticate->getEnergyUser();
                 <div class="row clearfix">
                     <article class="container">
                         <header>
-                            <h3>Afgelopen 7 dagen</h3>
+                            <h3>Afgelopen 14 dagen</h3>
                         </header>
                     </article>
                     <div class="col-md-12">

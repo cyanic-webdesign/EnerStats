@@ -18,7 +18,7 @@ foreach($energyMapper->getDifferences($raw) as $rawLog) {
     $energyMapper->saveDailyLog($rawLog);
 }
 
-$daily = $energyMapper->getDailyLogs(new DateTime('- 7 days'), new DateTime('today'));
+$daily = $energyMapper->getDailyLogs(new DateTime('- 14 days'), new DateTime('today'));
 $monthly = $energyMapper->getMonthlyLogs(new DateTime('last year'), new DateTime('next month'));
 $yearly = $energyMapper->getYearlyLogs();
 
@@ -63,7 +63,7 @@ $energyUser = $authenticate->getEnergyUser();
                 <ul class="list-unstyled clearfix">
 					<li class="col-md-3"><div class="well text-center">Huidig<br><h4><?php echo number_format($lastLog->getCurrentUsage(), 2); ?> kWh</h4></div></li>
 					<li class="col-md-3"><div class="well text-center">Vandaag<br><h4><?php echo number_format($currentLogs->getCurrentUsage(), 2); ?> kWh</h4></div></li>
-					<li class="col-md-3"><div class="well text-center">Dagrecord (<?php echo $recordUsage[0]->getDateCreated()->format('d-m-Y'); ?>)<br><h4><?php echo number_format($recordUsage[0]->getCurrentUsage(), 2); ?> kWh</h4></div></li>
+					<li class="col-md-3"><div class="well text-center">Record (<?php echo $recordUsage[0]->getDateCreated()->format('d-m-Y'); ?>)<br><h4><?php echo number_format($recordUsage[0]->getCurrentUsage(), 2); ?> kWh</h4></div></li>
 					<li class="col-md-3"><div class="well text-center">Totaal<br><h4><?php echo number_format($lastLog->getT1Usage() + $lastLog->getT2Usage(), 2); ?> kWh</h4></div></li>
 				</ul>
 				<hr>
@@ -71,7 +71,7 @@ $energyUser = $authenticate->getEnergyUser();
                 <ul class="list-unstyled clearfix">
 					<li class="col-md-3"><div class="well text-center">Huidig<br><h4><?php echo number_format($lastLog->getCurrentRestitution(), 2); ?> kWh</h4></div></li>
 					<li class="col-md-3"><div class="well text-center">Vandaag<br><h4><?php echo number_format($currentLogs->getCurrentRestitution(), 2); ?> kWh</h4></div></li>
-					<li class="col-md-3"><div class="well text-center">Dagrecord (<?php echo $recordRestitution[0]->getDateCreated()->format('d-m-Y'); ?>)<br><h4><?php echo number_format($recordRestitution[0]->getCurrentRestitution(), 2); ?> kWh</h4></div></li>					                    
+					<li class="col-md-3"><div class="well text-center">Record (<?php echo $recordRestitution[0]->getDateCreated()->format('d-m-Y'); ?>)<br><h4><?php echo number_format($recordRestitution[0]->getCurrentRestitution(), 2); ?> kWh</h4></div></li>					                    
                     <li class="col-md-3"><div class="well text-center">Totaal<br><h4><?php echo number_format($lastLog->getT1Restitution() + $lastLog->getT2Restitution(), 2); ?> kWh</h4></div></li>
                 </ul>
                 <hr>
@@ -89,7 +89,7 @@ $energyUser = $authenticate->getEnergyUser();
                 <div class="row clearfix">
                     <article class="container">
                         <header>
-                            <h3>Afgelopen 7 dagen</h3>
+                            <h3>Afgelopen 14 dagen</h3>
                         </header>
                     </article>
                     <div class="col-md-12">
