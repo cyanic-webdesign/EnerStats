@@ -170,10 +170,8 @@ class Energy extends AbstractMapper
 	
 	/**
 	 * 
-	 * Get the yearly logs between two dates
+	 * Get the yearly logs
 	 * 
-	 * @param datetime $dateStart
-	 * @param datetime $dateEnd 
 	 * @return array $results
 	 * 
 	 */	
@@ -192,9 +190,40 @@ class Energy extends AbstractMapper
 		//	bind the params
 		$query->execute();		
 		
-		//	fetch all the rows and return an array
+		//	fetch all the rows and return an array	
 		return $this->toObjectArray($query->fetchAll(PDO::FETCH_ASSOC));			
-	}	
+	}
+	
+	
+	public function getContractLogs(DateTime $dateStart)
+	{
+		$results = array();
+		$years = date('Y') - $dateStart->format('Y');
+		for($t=0; $t < $years; $t++) {
+			
+			$start = date('Y-m-d', strtotime($dateStart->format('Y-m-d') . " + $t year"));
+			$end = date('Y-m-d', strtotime($start . " + 364 days"));
+			
+			//	prepare the select statement
+			$query = $this->adapter->getConnection()->prepare(
+				"SELECT SUM(t1_usage + t2_usage) as current_usage, SUM(t1_restitution + t2_restitution) as current_restitution, SUM(gas_usage) as gas_usage
+				 FROM `p1_data_daily`
+				 WHERE date_created BETWEEN '" . $start . "' AND '" . $end . "'
+				 ORDER BY date_created ASC
+				"
+			); 
+			//	bind the params
+			$query->execute();
+			
+			//	fetch all the rows and return an array
+			$rows = $this->toObjectArray($query->fetchAll(PDO::FETCH_ASSOC));
+			$rows[0]->setdateCreated($start);
+			$results[] = $rows[0];
+		}
+		
+		return $results;
+	}
+	
 	
 	
 	/**
@@ -208,13 +237,11 @@ class Energy extends AbstractMapper
 	public function getDailyRawLogs(DateTime $date)
 	{
 		$query = $this->adapter->getConnection()->prepare(
-			"SELECT MIN(date_created) as date_created, t1_usage, t2_usage, t1_restitution, 
-				t2_restitution, gas_usage
-			FROM `p1_data` 
-			WHERE date_created > '" . $date->format('Y-m-d H:i:s') . "'
-			GROUP BY date_format(date_created, '%Y-%m-%d')
-			ORDER BY date_created ASC
-			"
+			"SELECT id, date_format(date_created, '%Y-%m-%d') as date_created, t1_usage, t2_usage, t1_restitution, t2_restitution, gas_usage
+			FROM `p1_data` d
+			INNER JOIN (SELECT MIN(date_created) as min FROM p1_data WHERE date_created > '" . $date->format('Y-m-d H:i:s') . "' GROUP BY date_format(date_created, '%Y-%m-%d')) pd
+			ON d.date_created = pd.min
+			ORDER BY `d`.`date_created`  ASC"
 		);
 		//	bind the params
 		$query->execute();		
@@ -279,10 +306,9 @@ class Energy extends AbstractMapper
 	{
 		//	prepare the select statement
 		$query = $this->adapter->getConnection()->prepare(
-			"SELECT DATE_FORMAT(date_created, '%y-%c-%d %H:00:00') as date_created, `id`, `t1_usage`, `t2_usage`, `t1_restitution`, `t2_restitution`, `current_usage`, `current_restitution`, `gas_usage`, `rate`
+			"SELECT `id`, `date_created`, `t1_usage`, `t2_usage`, `t1_restitution`, `t2_restitution`, `current_usage`, `current_restitution`, `gas_usage`, `rate`
 			FROM p1_data 
-			WHERE 1 
-			GROUP BY DATE_FORMAT(date_created, '%y-%c-%d %H:00:00')
+			WHERE DATE_FORMAT(date_created, '%i') = '00'
 			ORDER BY date_created DESC
 			LIMIT " . $limit 
 		);
@@ -336,9 +362,9 @@ class Energy extends AbstractMapper
 		$result = array();		
 		foreach($logs as $key => $log) {
 			if($negative === true) {
-				$result[] = '[' . $log->getDateCreated()->format('U') . '000, -'. number_format($log->$column, 2) . ']';
+				$result[] = '[' . $log->getDateCreated()->format('U') . '000, -'. number_format($log->$column, 2, '.', '') . ']';
 			} else {
-				$result[] = '[' . $log->getDateCreated()->format('U') . '000, '. number_format($log->$column, 2) . ']';
+				$result[] = '[' . $log->getDateCreated()->format('U') . '000, '. number_format($log->$column, 2, '.', '') . ']';
 			}
 		}
 		

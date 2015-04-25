@@ -13,7 +13,7 @@ $recordUsage = $energyMapper->getRecord('current_usage');
 $recordRestitution = $energyMapper->getRecord('current_restitution');
 
 //     get the raw daily logs
-$raw =  $energyMapper->getDailyRawLogs(new DateTime('yesterday'));
+$raw =  $energyMapper->getDailyRawLogs(new DateTime('last week'));
 foreach($energyMapper->getDifferences($raw) as $rawLog) {
     $energyMapper->saveDailyLog($rawLog);
 }
@@ -21,9 +21,10 @@ foreach($energyMapper->getDifferences($raw) as $rawLog) {
 $daily = $energyMapper->getDailyLogs(new DateTime('- 14 days'), new DateTime('today'));
 $monthly = $energyMapper->getMonthlyLogs(new DateTime('last year'), new DateTime('next month'));
 $yearly = $energyMapper->getYearlyLogs();
+$dailyHistory = $energyMapper->getDailyLogs(new DateTime('today -1 year'), new DateTime('today -1 year'));
+$contractLogs = $energyMapper->getContractLogs(new DateTime('2013-08-01'));
 
 $energyUser = $authenticate->getEnergyUser();
-
 
 ?>
         <title>Electra - EnerStats - Statisfy your enery usage</title>    
@@ -62,7 +63,11 @@ $energyUser = $authenticate->getEnergyUser();
 				<h3>Verbruik</h3>
                 <ul class="list-unstyled clearfix">
 					<li class="col-md-3"><div class="well text-center">Huidig<br><h4><?php echo number_format($lastLog->getCurrentUsage(), 2); ?> kWh</h4></div></li>
+					<?php if(count($dailyHistory)) : ?>
+					<li class="col-md-3"><div class="well text-center">Vandaag<br><h4><?php echo number_format($currentLogs->getCurrentUsage(), 2); ?> kWh <small><?php echo number_format($dailyHistory[0]->getCurrentUsage(), 2); ?> kWh</small></h4></div></li>
+					<?php else : ?>
 					<li class="col-md-3"><div class="well text-center">Vandaag<br><h4><?php echo number_format($currentLogs->getCurrentUsage(), 2); ?> kWh</h4></div></li>
+					<?php endif; ?>
 					<li class="col-md-3"><div class="well text-center">Record (<?php echo $recordUsage[0]->getDateCreated()->format('d-m-Y'); ?>)<br><h4><?php echo number_format($recordUsage[0]->getCurrentUsage(), 2); ?> kWh</h4></div></li>
 					<li class="col-md-3"><div class="well text-center">Totaal<br><h4><?php echo number_format($lastLog->getT1Usage() + $lastLog->getT2Usage(), 2); ?> kWh</h4></div></li>
 				</ul>
@@ -70,7 +75,11 @@ $energyUser = $authenticate->getEnergyUser();
 				<h3>Teruglevering</h3>
                 <ul class="list-unstyled clearfix">
 					<li class="col-md-3"><div class="well text-center">Huidig<br><h4><?php echo number_format($lastLog->getCurrentRestitution(), 2); ?> kWh</h4></div></li>
+					<?php if(count($dailyHistory)) : ?>
+					<li class="col-md-3"><div class="well text-center">Vandaag<br><h4><?php echo number_format($currentLogs->getCurrentRestitution(), 2); ?> kWh <small><?php echo number_format($dailyHistory[0]->getCurrentRestitution(), 2); ?> kWh</small></h4></div></li>
+					<?php else : ?>
 					<li class="col-md-3"><div class="well text-center">Vandaag<br><h4><?php echo number_format($currentLogs->getCurrentRestitution(), 2); ?> kWh</h4></div></li>
+					<?php endif; ?>
 					<li class="col-md-3"><div class="well text-center">Record (<?php echo $recordRestitution[0]->getDateCreated()->format('d-m-Y'); ?>)<br><h4><?php echo number_format($recordRestitution[0]->getCurrentRestitution(), 2); ?> kWh</h4></div></li>					                    
                     <li class="col-md-3"><div class="well text-center">Totaal<br><h4><?php echo number_format($lastLog->getT1Restitution() + $lastLog->getT2Restitution(), 2); ?> kWh</h4></div></li>
                 </ul>
@@ -114,15 +123,12 @@ $energyUser = $authenticate->getEnergyUser();
                             <h3>Afgelopen jaren</h3>
                         </header>
                     </article>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div id="electra-chart-years" class="chart"></div>
                     </div>
-                    <div class="col-md-4">
-                        <div id="electra-chart-pie" class="chart"></div>
+                    <div class="col-md-6">
+                        <div id="electra-chart-contract-years" class="chart"></div>
                     </div>
-                    <div class="col-md-4">
-                        <div id="electra-chart-pie" class="chart"></div>
-                    </div>					
                 </div>				
             </section>
             <hr>
@@ -301,5 +307,44 @@ $energyUser = $authenticate->getEnergyUser();
 				EnerStats.electraYears = jQuery.extend(true, {}, EnerStats.defaultColumnChart, EnerStats.electraYears);
 				EnerStats.electraYears.init(EnerStats.electraYears.options);
 				EnerStats.electraYears.create();
+				
+				EnerStats.electraContractYears = {
+					container: 'electra-chart-contract-years',					
+					options: {
+						xAxis: { labels: { formatter: function() { return Highcharts.dateFormat('%B %Y', this.value); }}},
+						tooltip: {
+							useHTML: true,
+							shared: true,
+							borderRadius: 0,
+							borderColor: '#d7dadb',
+							borderWidth: 1,    
+							formatter: function() {
+								html = '<table width="250" class="chart-tooltip"><tr"><td class="pink" colspan="2"><h5>' + Highcharts.dateFormat('%B %Y', this.points[0].point.x) + '</h5>';
+								total = 0;
+								this.points.forEach(function(entry) {
+									html += '<tr><td width="75%"><i class="fa fa-square" style="color:' + entry.series.color + ';"></i> ' + entry.series.name + '</td><td class="text-right"><strong>' + Math.abs(entry.point.y) + ' kWh</strong></td></tr>';
+									total += entry.point.y;
+								});
+								if(total >= 0) {
+									html += '<tr><td><br />Totaal energieverbruik</td><td class="text-right"><br /><strong>' + total.toFixed(2) + ' kWh</strong><td></tr>';
+								} else {
+									html += '<tr><td><br />Totale teruglevering</td><td class="text-right"><br /><strong>' + Math.abs(total).toFixed(2) + ' kWh</strong><td></tr>';
+								} 
+								html += '</table>';
+								return html;
+							}						
+						},						
+                        series: [{
+							name: 'Energieverbruik',
+							data: <?php echo($energyMapper->toJson($contractLogs, 'currentUsage')); ?>,
+						}, {
+							name: 'Teruglevering',
+							data: <?php echo($energyMapper->toJson($contractLogs, 'currentRestitution', true)); ?>,
+						}]
+					}
+				};
+				EnerStats.electraContractYears = jQuery.extend(true, {}, EnerStats.defaultColumnChart, EnerStats.electraContractYears);
+				EnerStats.electraContractYears.init(EnerStats.electraContractYears.options);
+				EnerStats.electraContractYears.create();				
 		    });
 		</script>

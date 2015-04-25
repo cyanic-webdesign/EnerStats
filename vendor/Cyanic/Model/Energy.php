@@ -68,6 +68,7 @@ class Energy extends AbstractModel
 		if ($date instanceof DateTime) {
             $this->dateCreated = $date;
         } else {
+			$date = (strlen($date) == 4) ? $date . '-01-01' : $date;
             $this->dateCreated = new DateTime($date);
         }		
 		return $this;

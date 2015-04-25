@@ -15,6 +15,8 @@ $recordUsage = $energyMapper->getRecord('gas_usage');
 $daily = $energyMapper->getDailyLogs(new DateTime('- 14 days'), new DateTime('today'));
 $monthly = $energyMapper->getMonthlyLogs(new DateTime('last year'), new DateTime('next month'));
 $yearly = $energyMapper->getYearlyLogs();
+$dailyHistory = $energyMapper->getDailyLogs(new DateTime('today -1 year'), new DateTime('today -1 year'));
+$contractLogs = $energyMapper->getContractLogs(new DateTime('2013-08-01'));
 
 $energyUser = $authenticate->getEnergyUser();
 
@@ -54,7 +56,11 @@ $energyUser = $authenticate->getEnergyUser();
                 <hr>           
                 <ul class="list-unstyled clearfix">
 					<li class="col-md-3"><div class="well text-center">Huidig<br><h4><?php echo number_format($lastLog[0]->getGasUsage() - $lastLog[6]->getGasUsage(), 4); ?> m&#179;</h4></div></li>
+					<?php if(count($dailyHistory)) : ?>
+					<li class="col-md-3"><div class="well text-center">Vandaag<br><h4><?php echo number_format($currentLogs->getGasUsage(), 2); ?> m&#179; <small><?php echo number_format($dailyHistory[0]->getGasUsage(), 2); ?> m&#179;</small></h4></div></li>
+					<?php else : ?>
 					<li class="col-md-3"><div class="well text-center">Vandaag<br><h4><?php echo number_format($currentLogs->getGasUsage(), 2); ?> m&#179;</h4></div></li>
+					<?php endif; ?>
 					<li class="col-md-3"><div class="well text-center">Record (<?php echo $recordUsage[0]->getDateCreated()->format('d-m-Y'); ?>)<br><h4><?php echo number_format($recordUsage[0]->getGasUsage(), 2); ?> m&#179;</h4></div></li>					                    					
                     <li class="col-md-3"><div class="well text-center">Totaal<br><h4><?php echo number_format($lastLog[0]->getGasUsage(), 2); ?> m&#179;</h4></div></li>
                 </ul>
@@ -98,8 +104,11 @@ $energyUser = $authenticate->getEnergyUser();
                             <h3>Afgelopen jaren</h3>
                         </header>
                     </article>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div id="gas-chart-years" class="chart"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="gas-chart-contract-years" class="chart"></div>
                     </div>					
                 </div>				
             </section>
@@ -198,7 +207,7 @@ $energyUser = $authenticate->getEnergyUser();
 					options: {
 						colors: ['#fc4349'],
 						yAxis: { title: { text: 'm3'} },
-						xAxis: { labels: { formatter: function() { return Highcharts.dateFormat('%B %Y', this.value); } } },
+						xAxis: { labels: { formatter: function() { return Highcharts.dateFormat('%b %Y', this.value); } } },
 						tooltip: {
 							useHTML: true,
 							shared: true,
@@ -254,5 +263,36 @@ $energyUser = $authenticate->getEnergyUser();
 				EnerStats.gasYears = jQuery.extend(true, {}, EnerStats.defaultColumnChart, EnerStats.gasYears);
 				EnerStats.gasYears.init(EnerStats.gasYears.options);
 				EnerStats.gasYears.create();
+				
+				EnerStats.gasContractYears = {
+					container: 'gas-chart-contract-years',
+					options: {
+						colors: ['#fc4349'],
+						yAxis: { title: { text: 'm3'} },
+						xAxis: { labels: { formatter: function() { return Highcharts.dateFormat('%b %Y', this.value); }}},
+						tooltip: {
+							useHTML: true,
+							shared: true,
+							borderRadius: 0,
+							borderColor: '#d7dadb',
+							borderWidth: 1,  
+							formatter: function() {
+								html = '<table width="250" class="chart-tooltip"><tr"><td class="light-blue" colspan="2"><h5>' + Highcharts.dateFormat('%B %Y', this.points[0].point.x) + '</h5>';
+								this.points.forEach(function(entry) {
+									html += '<tr><td width="75%"><i class="fa fa-square" style="color:' + entry.series.color + ';"></i> ' + entry.series.name + '</td><td class="text-right"><strong>' + Math.abs(entry.point.y) + ' m&#179;</strong></td></tr>';
+								});
+								html += '</table>';
+								return html;
+							}						
+						},						
+						series: [{
+						    name: 'Gasverbruik',
+						    data: <?php echo($energyMapper->toJson($contractLogs, 'gasUsage')); ?>,
+	                    }]
+				   }
+				};
+				EnerStats.gasContractYears = jQuery.extend(true, {}, EnerStats.defaultColumnChart, EnerStats.gasContractYears);
+				EnerStats.gasContractYears.init(EnerStats.gasContractYears.options);
+				EnerStats.gasContractYears.create();				
 		    });
 		</script>

@@ -53,15 +53,25 @@ class String
 	 */
 	public static function toUrl($string)
 	{
+		$string = str_replace('@', '-at-', $string);
+		$string = str_replace('&', '-en-', $string);
+		$string = str_replace('(', '', $string);
+		$string = str_replace(')', '', $string);
+
+		
 		$replace = function($string) 
 		{			
-			$string = preg_replace('/([!,&,@,%,$,\',",?,,,#])/', '', $string);
-			$string = preg_replace('~&([a-z]{1,2})(acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml);~i', '$1', htmlentities($string, ENT_QUOTES, 'UTF-8'));			
+			$string = preg_replace('/([!,&,.,+,:,;,@,%,$,\',",?,,,#])/', '', $string);
+			$string = preg_replace('~&([a-z]{1,2})(acute|caron|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml);~i', '$1', htmlentities($string, ENT_QUOTES, 'UTF-8'));			
 			
 			return strtolower($string);
 		};
 		
-		return implode('-', array_map($replace, explode(' ', $string)));
+		$url = implode('-', array_map($replace, explode(' ', $string)));
+		$url = str_replace('---', '-', $url);
+		$url = str_replace('--', '-', $url);
+		
+		return $url;
 	}
 	
 	
